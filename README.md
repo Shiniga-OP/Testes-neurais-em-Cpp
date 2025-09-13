@@ -1,2 +1,22 @@
-# Testes-neurais-em-C++
+# Testes de redes neurais em C++
 Meus projetos de testes redes neurais/vetorização em C++
+
+1. ativações.
+2. tokenizadores.
+3. utilitários: pesos, atualização de pesos, perda, erro, saída, métricas.
+
+## para testar:
+
+```Cpp
+#include <ativas.h>
+#include <toke.h>
+#include <util.h>
+
+int main() {
+  testeU(); // testa todos os utilitários
+  testeT(); // testa o tokenizador
+  return 0;
+}
+```
+
+implementação feita do zero, sem bibliotecas de IA prontas.
