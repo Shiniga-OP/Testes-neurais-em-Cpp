@@ -4,6 +4,97 @@
 #include <random>
 #include <functional>
 
+// funções de pesos
+std::vector<std::vector<float>> iniPesosXavier(int l, int c) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+    
+    float limite = std::sqrt(6.0f / (l + c));
+    std::vector<std::vector<float>> pesos(l, std::vector<float>(c));
+    
+    for(int i = 0; i < l; ++i) {
+        for(int j = 0; j < c; ++j) pesos[i][j] = dis(gen) * limite;
+    }
+    return pesos;
+}
+
+std::vector<std::vector<float>> iniPesosHe(int l, int c) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+    
+    float limite = std::sqrt(2.0f / l);
+    std::vector<std::vector<float>> pesos(l, std::vector<float>(c));
+    
+    for(int i = 0; i < l; ++i) {
+        for(int j = 0; j < c; ++j) pesos[i][j] = dis(gen) * limite;
+    }
+    return pesos;
+}
+
+// att de pesos
+std::vector<std::vector<float>> attPesos(const std::vector<std::vector<float>>& pesos, const std::vector<std::vector<float>>& grad, float taxa, float lambda = 1e-3f) {
+    std::vector<std::vector<float>> nova(pesos.size(), std::vector<float>(pesos[0].size()));
+    
+    for(size_t i = 0; i < pesos.size(); ++i) {
+        for(size_t j = 0; j < pesos[i].size(); ++j) {
+            nova[i][j] = pesos[i][j] - taxa * grad[i][j] - lambda * pesos[i][j];
+        }
+    }
+    return nova;
+}
+
+std::vector<std::vector<float>> attPesosMomentum(const std::vector<std::vector<float>>& pesos, const std::vector<std::vector<float>>& grad, float taxa, float momento, std::vector<std::vector<float>>& velocidade) {
+    std::vector<std::vector<float>> nova(pesos.size(), std::vector<float>(pesos[0].size()));
+    
+    for(size_t i = 0; i < pesos.size(); ++i) {
+        for(size_t j = 0; j < pesos[i].size(); ++j) {
+            velocidade[i][j] = momento * velocidade[i][j] + grad[i][j];
+            nova[i][j] = pesos[i][j] - taxa * velocidade[i][j];
+        }
+    }
+    return nova;
+}
+
+std::vector<std::vector<float>> attPesosAdam(const std::vector<std::vector<float>>& pesos, const std::vector<std::vector<float>>& grad, std::vector<std::vector<float>>& m, std::vector<std::vector<float>>& v, float taxa, float beta1 = 0.9f, float beta2 = 0.999f, float eps = 1e-8f, int iteracao = 1, float lambda = 0.001f) {
+    std::vector<std::vector<float>> nova(pesos.size(), std::vector<float>(pesos[0].size()));
+    
+    float fator1 = 1.0f - std::pow(beta1, iteracao);
+    float fator2 = 1.0f - std::pow(beta2, iteracao);
+    float umMenosBeta1 = 1.0f - beta1;
+    float umMenosBeta2 = 1.0f - beta2;
+    
+    for(size_t i = 0; i < pesos.size(); ++i) {
+        for(size_t j = 0; j < pesos[i].size(); ++j) {
+            float g = grad[i][j] + lambda * pesos[i][j];
+            m[i][j] = beta1 * m[i][j] + umMenosBeta1 * g;
+            v[i][j] = beta2 * v[i][j] + umMenosBeta2 * g * g;
+            float mChapeu = m[i][j] / fator1;
+            float vChapeu = v[i][j] / fator2;
+            nova[i][j] = pesos[i][j] - taxa * mChapeu / (std::sqrt(vChapeu) + eps);
+        }
+    }
+    return nova;
+}
+
+std::vector<float> attPesosAdam1D(std::vector<float>& p, const std::vector<float>& grad, std::vector<float>& m, std::vector<float>& v, float taxa, float beta1 = 0.9f, float beta2 = 0.999f, float eps = 1e-8f, int t = 1, float lambda = 0.001f) {
+    float umMenosBeta1 = 1.0f - beta1;
+    float umMenosBeta2 = 1.0f - beta2;
+    float fator1 = 1.0f - std::pow(beta1, t);
+    float fator2 = 1.0f - std::pow(beta2, t);
+    
+    for(size_t i = 0; i < p.size(); ++i) {
+        float g = grad[i] + lambda * p[i];
+        m[i] = beta1 * m[i] + umMenosBeta1 * g;
+        v[i] = beta2 * v[i] + umMenosBeta2 * g * g;
+        float mChapeu = m[i] / fator1;
+        float vChapeu = v[i] / fator2;
+        p[i] -= taxa * mChapeu / (std::sqrt(vChapeu) + eps);
+    }
+    return p;
+}
+
 // funções de regularização:
 std::vector<std::vector<float>> regularL1(const std::vector<std::vector<float>>& pesos, float lambda) {
     std::vector<std::vector<float>> res;
@@ -340,11 +431,13 @@ void testeU() {
     std::cout << "]\n";
     auto dropoutRes = dropout(tensor, 0.3f);
     std::cout << "Dropout: [";
-    for(const auto& linha : dropoutRes) for (float val : linha) std::cout << val << " ";
+    for(const auto& linha : dropoutRes) {
+        for(float val : linha) std::cout << val << " ";
+    }
     std::cout << "]\n";
     auto normEnt = normEntrada(vetor);
     std::cout << "Normalização Entrada: [";
-    for (float val : normEnt) std::cout << val << " ";
+    for(float val : normEnt) std::cout << val << " ";
     std::cout << "]\n";
     auto normZ = normZPonto(vetor);
     std::cout << "Normalização Z: [";
@@ -357,4 +450,22 @@ void testeU() {
     std::cout << "MSE: " << mse({1.0f, 2.0f}, {1.5f, 1.8f}) << "\n";
     std::cout << "KL Divergence: " << klDivergencia(p, q) << "\n";
     std::cout << "ROC AUC: " << rocAuc(pontos, rotulos) << "\n";
+    std::cout << "\n=== TESTES PESOS ===\n\n";
+    std::vector<std::vector<float>> pesos2 = {{1.0f, 2.0f}, {3.0f, 4.0f}};
+    std::vector<std::vector<float>> grad2 = {{0.1f, 0.2f}, {0.3f, 0.4f}};
+    std::vector<std::vector<float>> velocidade = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+    std::vector<std::vector<float>> m = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+    std::vector<std::vector<float>> v = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+    auto xavier = iniPesosXavier(2, 3);
+    std::cout << "Xavier: ";
+    for(const auto& linha : xavier) {
+        for(float val : linha) std::cout << val << " ";
+    }
+    std::cout << "\n";
+    auto novosPesos = attPesos(pesos2, grad2, 0.01f);
+    std::cout << "attPesos: ";
+    for(const auto& linha : novosPesos) {
+        for(float val : linha) std::cout << val << " ";
+    }
+    std::cout << "\n";
 }

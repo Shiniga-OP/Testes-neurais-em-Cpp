@@ -9,7 +9,7 @@
 class TokenizadorBPE {
 public:
     TokenizadorBPE(std::vector<std::pair<std::string,std::string>> merges) {
-        // inicializa merges
+        // inicia merges
         for(size_t i = 0; i < merges.size(); ++i) {
             std::string chave = merges[i].first + " " + merges[i].second;
             bpeRanks[chave] = i;
@@ -175,8 +175,8 @@ public:
     }
 };
 
-// uso:
 void testeT() {
+    std::cout << "\n=== TESTES TOKENIZADOR BPE ===\n\n";
     TokenizadorBPE t({});
     std::vector<std::string> textos = { "olá mundo", "teste de tokenização" };
     t.construirVocab(textos);
@@ -184,7 +184,7 @@ void testeT() {
     std::string frase = "olá mundo";
     std::vector<int> cod = t.codificar(frase);
     std::string dec = t.decodificar(cod);
-
+    std::cout << "Texto: " << frase << std::endl;
     printf("Codificado: ");
     for(int id : cod) printf("%i ", id);
     printf("\nDecodificado: %s\n", dec.c_str());
