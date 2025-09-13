@@ -87,7 +87,7 @@ public:
         return proximoId;
     }
 
-private:
+public:
     std::unordered_map<std::string,int> tokenPraId;
     std::unordered_map<int, std::string> idPraToken;
     std::unordered_map<std::string,int> bpeRanks;
@@ -176,7 +176,7 @@ private:
 };
 
 // uso:
-int main() {
+void testeT() {
     TokenizadorBPE t({});
     std::vector<std::string> textos = { "olá mundo", "teste de tokenização" };
     t.construirVocab(textos);
@@ -188,5 +188,4 @@ int main() {
     printf("Codificado: ");
     for(int id : cod) printf("%i ", id);
     printf("\nDecodificado: %s\n", dec.c_str());
-    return 0;
 }
