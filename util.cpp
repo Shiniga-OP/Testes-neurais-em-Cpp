@@ -3,6 +3,10 @@
 #include <cmath>
 #include <random>
 #include <functional>
+#include <algorithm>
+#include <stdexcept>
+
+void _testeMatrizes();
 
 // funções de pesos
 std::vector<std::vector<float>> iniPesosXavier(int l, int c) {
@@ -353,6 +357,167 @@ std::vector<float> addRuido(const std::vector<float>& v, float intenso = 0.01f) 
     return res;
 }
 
+// funções matriz 3D
+std::vector<std::vector<std::vector<float>>> tensor3D(int p, int l, int c, float escala = 0.1f) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-escala, escala);
+
+    std::vector<std::vector<std::vector<float>>> t(p, std::vector<std::vector<float>>(l, std::vector<float>(c)));
+    for(int i = 0; i < p; ++i) {
+        for(int j = 0; j < l; ++j) {
+            for(int k = 0; k < c; ++k) t[i][j][k] = dis(gen);
+        }
+    }
+    return t;
+}
+std::vector<std::vector<std::vector<float>>> zeros3D(int p, int l, int c) {
+    return std::vector<std::vector<std::vector<float>>>(p, std::vector<std::vector<float>>(l, std::vector<float>(c, 0.0f)));
+}
+std::vector<std::vector<std::vector<float>>> mapear3D(const std::vector<std::vector<std::vector<float>>>& t, std::function<float(float)> fn) {
+    std::vector<std::vector<std::vector<float>>> res(t.size(), std::vector<std::vector<float>>(t[0].size(), std::vector<float>(t[0][0].size())));
+    for(size_t i = 0; i < t.size(); ++i) {
+        for(size_t j = 0; j < t[i].size(); ++j) {
+            for(size_t k = 0; k < t[i][j].size(); ++k) res[i][j][k] = fn(t[i][j][k]);
+        }
+    }
+    return res;
+}
+std::vector<std::vector<std::vector<float>>> somar3D(const std::vector<std::vector<std::vector<float>>>& a, const std::vector<std::vector<std::vector<float>>>& b) {
+    if(a.size() != b.size() || a[0].size() != b[0].size() || a[0][0].size() != b[0][0].size()) {
+        throw std::invalid_argument("Dimensões dos tensores incompatíveis em somar3D");
+    }
+    std::vector<std::vector<std::vector<float>>> res(a.size(), std::vector<std::vector<float>>(a[0].size(), std::vector<float>(a[0][0].size())));
+    for(size_t i = 0; i < a.size(); ++i) {
+        for(size_t j = 0; j < a[i].size(); ++j) {
+            for(size_t k = 0; k < a[i][j].size(); ++k) res[i][j][k] = a[i][j][k] + b[i][j][k];
+        }
+    }
+    return res;
+}
+std::vector<std::vector<std::vector<float>>> mult3DporEscalar(const std::vector<std::vector<std::vector<float>>>& t, float escalar) {
+    std::vector<std::vector<std::vector<float>>> res(t.size(), std::vector<std::vector<float>>(t[0].size(), std::vector<float>(t[0][0].size())));
+    for(size_t i = 0; i < t.size(); ++i) {
+        for(size_t j = 0; j < t[i].size(); ++j) {
+            for(size_t k = 0; k < t[i][j].size(); ++k) res[i][j][k] = t[i][j][k] * escalar;
+        }
+    }
+    return res;
+}
+
+// funções matriz 2D
+std::vector<std::vector<float>> matriz(int l, int c, float escala = 0.1f) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-escala, escala);
+
+    std::vector<std::vector<float>> m(l, std::vector<float>(c));
+    for(int i = 0; i < l; ++i) {
+        for(int j = 0; j < c; ++j) m[i][j] = dis(gen);
+    }
+    return m;
+}
+std::vector<std::vector<float>> exterior(const std::vector<float>& a, const std::vector<float>& b) {
+    std::vector<std::vector<float>> res(a.size(), std::vector<float>(b.size()));
+    for(size_t i = 0; i < a.size(); ++i) {
+        for(size_t j = 0; j < b.size(); ++j) res[i][j] = a[i] * b[j];
+    }
+    return res;
+}
+std::vector<std::vector<float>> somarMatriz(const std::vector<std::vector<float>>& a, const std::vector<std::vector<float>>& b) {
+    if(a.size() != b.size() || a[0].size() != b[0].size()) throw std::invalid_argument("Dimensões das matrizes incompatíveis em somarMatriz");
+    std::vector<std::vector<float>> res(a.size(), std::vector<float>(a[0].size()));
+    for(size_t i = 0; i < a.size(); ++i) {
+        for(size_t j = 0; j < a[i].size(); ++j) res[i][j] = a[i][j] + b[i][j];
+    }
+    return res;
+}
+std::vector<std::vector<float>> subMatriz(const std::vector<std::vector<float>>& a, const std::vector<std::vector<float>>& b) {
+    if(a.size() != b.size() || a[0].size() != b[0].size()) throw std::invalid_argument("Dimensões das matrizes incompatíveis em subMatriz");
+    std::vector<std::vector<float>> res(a.size(), std::vector<float>(a[0].size()));
+    for(size_t i = 0; i < a.size(); ++i) {
+        for(size_t j = 0; j < a[i].size(); ++j) res[i][j] = a[i][j] - b[i][j];
+    }
+    return res;
+}
+std::vector<std::vector<float>> multMatriz(const std::vector<std::vector<float>>& m, float s) {
+    std::vector<std::vector<float>> res(m.size(), std::vector<float>(m[0].size()));
+    for(size_t i = 0; i < m.size(); ++i) {
+        for(size_t j = 0; j < m[i].size(); ++j) res[i][j] = m[i][j] * s;
+    }
+    return res;
+}
+std::vector<std::vector<float>> multMatrizes(const std::vector<std::vector<float>>& a, const std::vector<std::vector<float>>& b) {
+    if(a[0].size() != b.size()) throw std::invalid_argument("Dimensões incompatíveis para multiplicação de matrizes");
+    std::vector<std::vector<float>> res(a.size(), std::vector<float>(b[0].size(), 0.0f));
+    for(size_t i = 0; i < a.size(); ++i) {
+        for(size_t j = 0; j < b[0].size(); ++j) {
+            for(size_t k = 0; k < a[0].size(); ++k) res[i][j] += a[i][k] * b[k][j];
+        }
+    }
+    return res;
+}
+std::vector<float> aplicarMatriz(const std::vector<std::vector<float>>& m, const std::vector<float>& v) {
+    if(m[0].size() != v.size()) throw std::invalid_argument("Dimensões incompatíveis em aplicarMatriz");
+    std::vector<float> res(m.size(), 0.0f);
+    for(size_t i = 0; i < m.size(); ++i) {
+        for(size_t j = 0; j < v.size(); ++j) res[i] += m[i][j] * v[j];
+    }
+    return res;
+}
+std::vector<std::vector<float>> transpor(const std::vector<std::vector<float>>& m) {
+    std::vector<std::vector<float>> res(m[0].size(), std::vector<float>(m.size()));
+    for(size_t i = 0; i < m.size(); ++i) {
+        for(size_t j = 0; j < m[0].size(); ++j) res[j][i] = m[i][j];
+    }
+    return res;
+}
+std::vector<std::vector<float>> matrizZeros(int l, int c) {
+    return std::vector<std::vector<float>>(l, std::vector<float>(c, 0.0f));
+}
+std::vector<std::vector<float>> identidade(int n) {
+    std::vector<std::vector<float>> res(n, std::vector<float>(n, 0.0f));
+    for(int i = 0; i < n; ++i) res[i][i] = 1.0f;
+    return res;
+}
+std::vector<float> matrizVetor(const std::vector<std::vector<float>>& m, const std::vector<float>& v) {
+    if(m[0].size() != v.size()) throw std::invalid_argument("Dimensões incompatíveis em matrizVetor");
+    std::vector<float> res(m.size(), 0.0f);
+    for(size_t i = 0; i < m.size(); ++i) {
+        for(size_t j = 0; j < v.size(); ++j) res[i] += m[i][j] * v[j];
+    }
+    return res;
+}
+std::vector<float> multVetorMatriz(const std::vector<float>& v, const std::vector<float>& c) {
+    if(v.size() != c.size()) throw std::invalid_argument("Dimensões dos vetores incompatíveis em multVetorMatriz");
+    std::vector<float> res(v.size());
+    for(size_t i = 0; i < v.size(); ++i) res[i] = v[i] * c[i];
+    return res;
+}
+std::vector<float> multMatrizVetor(const std::vector<std::vector<float>>& m, const std::vector<float>& v) {
+    if(m[0].size() != v.size()) throw std::invalid_argument("Dimensões incompatíveis em multMatrizVetor");
+    std::vector<float> res(m.size(), 0.0f);
+    for(size_t i = 0; i < m.size(); ++i) {
+        for(size_t j = 0; j < v.size(); ++j) res[i] += m[i][j] * v[j];
+    }
+    return res;
+}
+
+std::vector<float> vetor(int c, float escala) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-escala, escala);
+    std::vector<float> v(c);
+    for(int i = 0; i < c; ++i) v[i] = dis(gen);
+    return v;
+}
+float escalarDot(const std::vector<float>& a, const std::vector<float>& b) {
+    if(a.size() != b.size()) throw std::invalid_argument("Dimensões incompatíveis em escalarDot");
+    float soma = 0.0f;
+    for(size_t i = 0; i < a.size(); ++i) soma += a[i] * b[i];
+    return soma;
+}
+
 void testeU() {
     std::cout << "\n=== TESTES SAIDA ===\n\n";
     std::vector<float> entrada = {1.0f, 2.0f, 3.0f};
@@ -365,7 +530,7 @@ void testeU() {
     std::cout << "Derivada Softmax: ";
     for(float x : saida_derivada) std::cout << x << " ";
     std::cout << std::endl;
-    std::vector<std::vector<float>> matriz = {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}};
+    std::vector<std::vector<float>> matriz = {{1.0f, 2.0f, 3.0f}, {1.0f, 3.0f, 2.0f}};
     std::vector<std::vector<float>> saida_lote = softmaxLote(matriz, 1.0f);
     std::cout << "Softmax Lote:\n";
     for(const auto& linha : saida_lote) {
@@ -468,4 +633,73 @@ void testeU() {
         for(float val : linha) std::cout << val << " ";
     }
     std::cout << "\n";
+    _testeMatrizes();
+}
+
+void _testeMatrizes() {
+    std::cout << "\n=== TESTES MATRIZES ===\n\n";
+    auto t3d = tensor3D(2, 2, 2, 0.1f);
+    std::cout << "Tensor 3D:\n";
+    for(const auto& m : t3d) {
+        for(const auto& l : m) {
+            for (float v : l) std::cout << v << " ";
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+    }
+    auto z3d = zeros3D(2, 2, 2);
+    std::cout << "Zeros 3D:\n";
+    for(const auto& m : z3d) {
+        for(const auto& l : m) {
+            for(float v : l) std::cout << v << " ";
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+    }
+    auto mapeado = mapear3D(t3d, [](float x) { return x * 2.0f; });
+    std::cout << "Mapear 3D (x2):\n";
+    for(const auto& m : mapeado) {
+        for(const auto& l : m) {
+            for(float v : l) std::cout << v << " ";
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+    }
+    auto soma3d = somar3D(t3d, z3d);
+    std::cout << "Soma 3D:\n";
+    for(const auto& m : soma3d) {
+        for(const auto& l : m) {
+            for (float v : l) std::cout << v << " ";
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+    }
+    auto m = matriz(2, 3, 0.1f);
+    std::cout << "Matriz 2x3:\n";
+    for(const auto& l : m) {
+        for(float v : l) std::cout << v << " ";
+        std::cout << "\n";
+    }
+    std::vector<float> v1 = {1.0f, 2.0f};
+    std::vector<float> v2 = {3.0f, 4.0f};
+    auto ext = exterior(v1, v2);
+    std::cout << "Produto Externo:\n";
+    for(const auto& l : ext) {
+        for(float v : l) std::cout << v << " ";
+        std::cout << "\n";
+    }
+    auto m2 = matriz(2, 3, 0.1f);
+    auto soma_m = somarMatriz(m, m2);
+    std::cout << "Soma Matriz:\n";
+    for(const auto& l : soma_m) {
+        for(float v : l) std::cout << v << " ";
+        std::cout << "\n";
+    }
+    auto m3 = matriz(3, 2, 0.1f);
+    auto prod_m = multMatrizes(m, m3);
+    std::cout << "Multiplicação Matrizes:\n";
+    for(const auto& l : prod_m) {
+        for(float v : l) std::cout << v << " ";
+        std::cout << "\n";
+    }
 }
