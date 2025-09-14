@@ -8,7 +8,6 @@ Meus projetos de testes redes neurais/vetorização em C++
 ## para testar:
 
 ```Cpp
-#include <ativas.h>
 #include <toke.h>
 #include <util.h>
 
@@ -20,3 +19,8 @@ int main() {
 ```
 
 implementação feita do zero, sem bibliotecas de IA prontas.
+
+## exemplos
+você pode encontrar em exemplos:
+
+1. percpetron.cpp
