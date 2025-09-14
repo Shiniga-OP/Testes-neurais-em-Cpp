@@ -1,9 +1,9 @@
 # Testes de redes neurais em C++
 Meus projetos de testes redes neurais/vetorização em C++
 
-1. ativações: degrau, sigmoid, tanh, ReLU, GELU, etc, e deverivadas.
+1. ativações: degrau, sigmoid, tanh, ReLU, GELU, e mais, + deverivadas.
 2. tokenizadores: tokenzador sub palavra.
-3. utilitários: pesos, atualização de pesos, perda, erro, saída, métricas.
+3. utilitários: pesos, atualização de pesos, perda, erro, saída, métricas, matrizes 2D/3D + vetores.
 
 ## para testar:
 
